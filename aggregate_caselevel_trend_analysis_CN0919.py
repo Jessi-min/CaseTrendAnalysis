@@ -628,9 +628,7 @@ def plot_aggregate_trend_interactive(
         num_cols_facet = 3
     else:
         num_cols_facet = 4 # Or 5 for many subplots
- 
 
-   # Create interactive plot using Plotly Express
     fig = px.line(
         df_plot,
         x="Version",
@@ -647,7 +645,7 @@ def plot_aggregate_trend_interactive(
     fig.for_each_annotation(lambda a: a.update(text=f"<b>{a.text.split('=')[-1]}</b>", font_size=12))
 
     fig.update_layout(
-        autosize=True,
+        autosize=True,       
         hovermode="x unified", # Shows all traces at a specific x-point
         font=dict(size=10),
         title_x=0.5, # Center the main title
@@ -674,7 +672,7 @@ def plot_aggregate_trend_interactive(
         # 调整刻度标签字体大小，防止重叠
         tickfont=dict(size=9)
     )
-    fig.for_each_xaxis(format_plotly_xaxis_tick)
+
 
     # NEW: Generate fluctuation report HTML
     fluctuation_report_html = ""
