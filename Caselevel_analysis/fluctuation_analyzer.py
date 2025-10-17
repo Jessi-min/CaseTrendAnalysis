@@ -14,10 +14,11 @@ from config import DEFAULT_METRIC, DEFAULT_TARGET_RAILS
 
 # Configure logging
 logger = logging.getLogger(__name__)
+fluctuation_flag = 'Standard_Deviation'
 
 class FluctuationAnalyzer:
     """Class to handle fluctuation analysis functionality"""
-    
+        
     @staticmethod
     def calculate_fluctuations(data: pd.DataFrame, metric: str) -> pd.DataFrame:
         """
@@ -57,13 +58,19 @@ class FluctuationAnalyzer:
             mean_val = values.mean()
             std_dev_val = values.std()
             variance_val = values.var()
+            if mean_val != 0:
+                coeff_var = std_dev_val / mean_val
+            else:
+                coeff_var = np.nan
             
             result.append({
                 'Usecase': usecase,
                 'Mean': mean_val,
                 'Standard_Deviation': std_dev_val,
-                'Variance': variance_val
+                'Variance': variance_val,
+                'Coefficient_of_Variation': coeff_var
             })
+
         
         if not result:
             # If no real data could be calculated, return dummy data
@@ -72,7 +79,7 @@ class FluctuationAnalyzer:
         df = pd.DataFrame(result)
         
         # Ensure it's sorted by Variance descending for consistency
-        return df.sort_values(by='Variance', ascending=False).reset_index(drop=True)
+        return df.sort_values(by=fluctuation_flag, ascending=False).reset_index(drop=True)
     
     @staticmethod
     def _generate_dummy_fluctuation_data(usecases: List[str], metric: str) -> pd.DataFrame:
@@ -83,15 +90,17 @@ class FluctuationAnalyzer:
             mean_val = 10 + (i % 5) * 2
             std_dev_val = 0.5 + (i % 3) * 0.2 + (hash(metric + uc) % 100) / 1000
             variance_val = std_dev_val ** 2
+            coeff_var = std_dev_val / mean_val if mean_val != 0 else np.nan
             data.append({
                 'Usecase': uc, 
                 'Mean': mean_val, 
                 'Standard_Deviation': std_dev_val, 
-                'Variance': variance_val
+                'Variance': variance_val,
+                'Coefficient_of_Variation': coeff_var
             })
         
         df = pd.DataFrame(data)
-        return df.sort_values(by='Variance', ascending=False).reset_index(drop=True)
+        return df.sort_values(by=fluctuation_flag, ascending=False).reset_index(drop=True)
 
     @staticmethod
     def generate_fluctuation_report_html(data: pd.DataFrame, metrics_to_analyze: List[str]) -> str:
@@ -120,14 +129,14 @@ class FluctuationAnalyzer:
             if fluct_df.empty:
                 continue
 
-            mean_variance = fluct_df["Variance"].mean()
-            median_variance = fluct_df["Variance"].median()
-            std_variance = fluct_df["Variance"].std()
+            mean_variance = fluct_df[fluctuation_flag].mean()
+            median_variance = fluct_df[fluctuation_flag].median()
+            std_variance = fluct_df[fluctuation_flag].std()
 
             overall_variance_data[metric] = {
-                "Mean_Variance": mean_variance,
-                "Median_Variance": median_variance,
-                "Std_Dev_of_Variances": std_variance
+                "Mean_{fluctuation_flag}": mean_variance,
+                "Median_{fluctuation_flag}": median_variance,
+                "Std_Dev_of_{fluctuation_flag}": std_variance
             }
 
         # Phase 2: Generate textual conclusions
@@ -137,7 +146,7 @@ class FluctuationAnalyzer:
         if not overall_variance_data:
             conclusion_text += "No volatility data was generated for any Rail to draw conclusions."
         else:
-            ranked_metrics = sorted(overall_variance_data.items(), key=lambda item: item[1]["Mean_Variance"])
+            ranked_metrics = sorted(overall_variance_data.items(), key=lambda item: item[1]["Mean_{fluctuation_flag}"])
             most_stable_metric = ranked_metrics[0][0]
             least_stable_metric = ranked_metrics[-1][0]
 
@@ -203,7 +212,7 @@ class FluctuationAnalyzer:
                     uc_row = fluct_df[fluct_df['Usecase'] == uc]
                     if not uc_row.empty:
                         # Calculate Standard Deviation from Variance
-                        variance = uc_row['Variance'].iloc[0]
+                        variance = uc_row[fluctuation_flag].iloc[0]
                         if variance >= 0:
                             stddev_val = np.sqrt(variance)
                         else:
