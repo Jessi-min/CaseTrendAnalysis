@@ -844,6 +844,7 @@ def _generate_fluctuation_report_html(combined_df_long: pd.DataFrame, metrics_to
     # This phase remains largely the same as we still need the data for conclusions and the new table
     for metric in metrics_to_analyze: # 'metric' now represents the Rail name
         fluct_df = _calculate_fluctuations(combined_df_long, metric)
+        print(fluct_df)
         rail_fluctuation_dfs[metric] = fluct_df # Store for later use
 
         if fluct_df.empty:
@@ -962,7 +963,7 @@ def _generate_fluctuation_report_html(combined_df_long: pd.DataFrame, metrics_to
 
             variance_float = uc_variance_map.get(rail) # Get the float value directly
             if variance_float is not None:
-                variance_value_str = f"{variance_float:.4f}"
+                variance_value_str = f"{variance_float:.1f}"
                 # Check if this variance is the maximum for the current usecase's row
                 if max_variance_for_uc is not None and variance_float == max_variance_for_uc:
                     is_max = True
