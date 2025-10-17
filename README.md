@@ -1,4 +1,4 @@
-This is internal code depository of PPAT.
+This is internal code Repositories of PPAT.
 
 Branch Introduction:
 `feature_plot`
